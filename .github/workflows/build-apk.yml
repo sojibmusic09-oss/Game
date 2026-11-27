@@ -29,11 +29,6 @@ jobs:
         with:
           api-level: 35
           build-tools: "35.0.0"
-          packages: |
-            cmdline-tools;latest
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
 
       - name: Check google-services.json
         run: |
@@ -61,7 +56,12 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          gradle :app:assembleDebug --no-daemon
+          chmod +x ./gradlew || true
+          if [ -f "./gradlew" ]; then
+            ./gradlew :app:assembleDebug --no-daemon
+          else
+            gradle :app:assembleDebug --no-daemon
+          fi
 
       - name: Verify APK exists
         id: verify_apk
