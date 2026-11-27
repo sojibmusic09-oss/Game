@@ -30,6 +30,7 @@ jobs:
           api-level: 35
           build-tools: "35.0.0"
           packages: |
+            cmdline-tools;latest
             platform-tools
             platforms;android-35
             build-tools;35.0.0
