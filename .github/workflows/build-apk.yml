@@ -1,16 +1,16 @@
-
-name: Build BDAS Android APK
+name: Build BDAS Debug APK
 
 on:
-  push:
-    branches: [ main, master ]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
-  build-apk:
+  build-debug-apk:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,46 +20,66 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '17'
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          api-level: 35
+          build-tools: "35.0.0"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
-
-      - name: Build Debug APK
-        run: gradle :app:assembleDebug --no-daemon
-
-      - name: Verify APK
+      - name: Check google-services.json
         run: |
-          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-          if [ ! -f "$APK_PATH" ]; then
-            echo "ERROR: APK file not found!"
+          if [ ! -f "app/google-services.json" ]; then
+            echo "app/google-services.json missing!"
             exit 1
           fi
-          echo "APK BUILD SUCCESSFUL"
-          ls -lh "$APK_PATH"
+
+      - name: Generate debug.keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkeypair \
+              -v \
+              -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=BDAS Debug, OU=Android, O=BDAS, L=Dhaka, ST=Dhaka, C=BD"
+          fi
+          cp debug.keystore "$HOME/.android/debug.keystore"
+
+      - name: Build Debug APK
+        run: |
+          gradle :app:assembleDebug --no-daemon
+
+      - name: Verify APK exists
+        id: verify_apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "APK not found!"
+            exit 1
+          fi
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BDAS-Android-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: bdas-debug-apk
+          path: ${{ steps.verify_apk.outputs.apk_path }}
           if-no-files-found: error
-          retention-days: 30
 
-      - name: Publish Direct APK Release
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest-apk
-          name: Bangladesh Airline Simulator (BDAS) Latest APK
-          files: app/build/outputs/apk/debug/app-debug.apk
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: debug-latest
+          name: "BDAS Debug APK (${{ github.run_number }})"
+          body: "BDAS Debug APK build"
+          files: ${{ steps.verify_apk.outputs.apk_path }}
+          make_latest: false
