@@ -29,6 +29,10 @@ jobs:
         with:
           api-level: 35
           build-tools: "35.0.0"
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Check google-services.json
         run: |
@@ -83,4 +87,3 @@ jobs:
           body: "BDAS Debug APK build"
           files: ${{ steps.verify_apk.outputs.apk_path }}
           make_latest: false
-
