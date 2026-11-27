@@ -1,0 +1,330 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBoundedStringList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= 64));
+    }
+
+    function isValidPilotProfile(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 16 &&
+             data.pilotRank in ['STUDENT_PILOT', 'JUNIOR_PILOT', 'FIRST_OFFICER', 'SENIOR_FIRST_OFFICER', 'CAPTAIN', 'SENIOR_CAPTAIN'] &&
+             data.xp is int && data.xp >= 0 && data.xp <= 10000000 &&
+             data.flightHours is number && data.flightHours >= 0 && data.flightHours <= 1000000 &&
+             data.bdasCoins is int && data.bdasCoins >= 0 && data.bdasCoins <= 1000000000 &&
+             data.airlineCredits is int && data.airlineCredits >= 0 && data.airlineCredits <= 1000000000 &&
+             data.totalFlights is int && data.totalFlights >= 0 && data.totalFlights <= 1000000 &&
+             isBoundedStringList(data.unlockedAircraftIds, 20) &&
+             isBoundedStringList(data.unlockedAirportIds, 64) &&
+             isBoundedStringList(data.unlockedAchievementIds, 50) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAirline(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 40 &&
+             data.iataCode is string && data.iataCode.size() >= 2 && data.iataCode.size() <= 4 &&
+             data.logoId is string && data.logoId.size() >= 1 && data.logoId.size() <= 32 &&
+             data.primaryColorHex is string && data.primaryColorHex.size() == 7 &&
+             data.secondaryColorHex is string && data.secondaryColorHex.size() == 7 &&
+             data.reputation is int && data.reputation >= 0 && data.reputation <= 100 &&
+             data.pilotsHired is int && data.pilotsHired >= 0 && data.pilotsHired <= 500 &&
+             data.cabinCrewHired is int && data.cabinCrewHired >= 0 && data.cabinCrewHired <= 1000 &&
+             data.dailyRevenue is int && data.dailyRevenue >= 0 && data.dailyRevenue <= 100000000 &&
+             data.dailyExpenses is int && data.dailyExpenses >= 0 && data.dailyExpenses <= 100000000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidFleetAircraft(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.airlineId is string && data.airlineId.size() >= 1 && data.airlineId.size() <= 128 &&
+             data.aircraftModelId is string && data.aircraftModelId.size() >= 1 && data.aircraftModelId.size() <= 32 &&
+             data.registration is string && data.registration.size() >= 3 && data.registration.size() <= 16 &&
+             data.liveryName is string && data.liveryName.size() >= 1 && data.liveryName.size() <= 40 &&
+             data.conditionPercent is int && data.conditionPercent >= 0 && data.conditionPercent <= 100 &&
+             data.assignedRouteId is string && data.assignedRouteId.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAirlineRoute(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.airlineId is string && data.airlineId.size() >= 1 && data.airlineId.size() <= 128 &&
+             data.originIcao is string && data.originIcao.size() >= 4 && data.originIcao.size() <= 8 &&
+             data.destinationIcao is string && data.destinationIcao.size() >= 4 && data.destinationIcao.size() <= 8 &&
+             data.originIcao != data.destinationIcao &&
+             data.ticketPriceCoins is int && data.ticketPriceCoins >= 50 && data.ticketPriceCoins <= 50000 &&
+             data.demandScore is int && data.demandScore >= 0 && data.demandScore <= 100 &&
+             data.assignedFleetId is string && data.assignedFleetId.size() <= 128 &&
+             data.active is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidEconomyTransaction(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.txType in ['INCOME', 'EXPENSE'] &&
+             data.category is string && data.category.size() >= 2 && data.category.size() <= 40 &&
+             data.amountCoins is int && data.amountCoins >= 0 && data.amountCoins <= 100000000 &&
+             data.amountCredits is int && data.amountCredits >= 0 && data.amountCredits <= 100000000 &&
+             data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 140 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidFlightLog(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.mode in ['FREE_FLIGHT', 'CAREER', 'TRAINING', 'EMERGENCY', 'PASSENGER'] &&
+             data.aircraftId is string && data.aircraftId.size() >= 1 && data.aircraftId.size() <= 32 &&
+             data.originIcao is string && data.originIcao.size() >= 4 && data.originIcao.size() <= 8 &&
+             data.destinationIcao is string && data.destinationIcao.size() >= 4 && data.destinationIcao.size() <= 8 &&
+             data.missionId is string && data.missionId.size() <= 64 &&
+             data.landingFpm is int && data.landingFpm >= -10000 && data.landingFpm <= 10000 &&
+             data.score is int && data.score >= 0 && data.score <= 10000 &&
+             data.xpEarned is int && data.xpEarned >= 0 && data.xpEarned <= 50000 &&
+             data.coinsEarned is int && data.coinsEarned >= 0 && data.coinsEarned <= 500000 &&
+             data.weatherPreset is string && data.weatherPreset.size() >= 1 && data.weatherPreset.size() <= 32 &&
+             data.durationSec is int && data.durationSec >= 0 && data.durationSec <= 86400 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidFriendEntry(data, expectedUid) {
+      return data.userId == expectedUid &&
+             data.friendUid is string && data.friendUid.size() >= 1 && data.friendUid.size() <= 128 &&
+             data.friendCallsign is string && data.friendCallsign.size() >= 2 && data.friendCallsign.size() <= 32 &&
+             data.friendRank is string && data.friendRank.size() >= 1 && data.friendRank.size() <= 32 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidMultiplayerSession(data) {
+      return data.hostUserId is string && data.hostUserId.size() >= 1 && data.hostUserId.size() <= 128 &&
+             data.hostCallsign is string && data.hostCallsign.size() >= 2 && data.hostCallsign.size() <= 32 &&
+             data.title is string && data.title.size() >= 3 && data.title.size() <= 60 &&
+             data.airportIcao is string && data.airportIcao.size() >= 4 && data.airportIcao.size() <= 8 &&
+             data.weatherPreset is string && data.weatherPreset.size() >= 1 && data.weatherPreset.size() <= 32 &&
+             data.missionType is string && data.missionType.size() >= 1 && data.missionType.size() <= 32 &&
+             data.status in ['WAITING', 'ACTIVE', 'FINISHED'] &&
+             data.maxPlayers is int && data.maxPlayers >= 2 && data.maxPlayers <= 16 &&
+             data.playerCount is int && data.playerCount >= 1 && data.playerCount <= data.maxPlayers &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 16 &&
+             data.memberUids.size() == data.playerCount &&
+             data.hostUserId in data.memberUids &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAircraftState(data, sessionId, playerUid) {
+      return data.sessionId == sessionId &&
+             data.playerUid == playerUid &&
+             data.callsign is string && data.callsign.size() >= 2 && data.callsign.size() <= 32 &&
+             data.aircraftId is string && data.aircraftId.size() >= 1 && data.aircraftId.size() <= 32 &&
+             data.latitude is number && data.latitude >= 18.0 && data.latitude <= 28.0 &&
+             data.longitude is number && data.longitude >= 86.0 && data.longitude <= 95.0 &&
+             data.altitudeFt is number && data.altitudeFt >= -500.0 && data.altitudeFt <= 60000.0 &&
+             data.headingDeg is number && data.headingDeg >= 0.0 && data.headingDeg <= 360.0 &&
+             data.pitchDeg is number && data.pitchDeg >= -90.0 && data.pitchDeg <= 90.0 &&
+             data.rollDeg is number && data.rollDeg >= -180.0 && data.rollDeg <= 180.0 &&
+             data.speedKts is number && data.speedKts >= 0.0 && data.speedKts <= 700.0 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 16 &&
+             playerUid in data.memberUids &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'callsign', 'pilotRank', 'xp', 'flightHours', 'bdasCoins', 'airlineCredits', 'totalFlights', 'unlockedAircraftIds', 'unlockedAirportIds', 'unlockedAchievementIds', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'callsign', 'pilotRank', 'xp', 'flightHours', 'bdasCoins', 'airlineCredits', 'totalFlights', 'unlockedAircraftIds', 'unlockedAirportIds', 'unlockedAchievementIds', 'createdAt', 'updatedAt']) &&
+                       isValidPilotProfile(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidPilotProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'callsign', 'pilotRank', 'xp', 'flightHours', 'bdasCoins', 'airlineCredits', 'totalFlights', 'unlockedAircraftIds', 'unlockedAirportIds', 'unlockedAchievementIds', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /airlines/{airlineId} {
+        allow get: if isOwner(userId) && isValidId(airlineId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(airlineId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'iataCode', 'logoId', 'primaryColorHex', 'secondaryColorHex', 'reputation', 'pilotsHired', 'cabinCrewHired', 'dailyRevenue', 'dailyExpenses', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'iataCode', 'logoId', 'primaryColorHex', 'secondaryColorHex', 'reputation', 'pilotsHired', 'cabinCrewHired', 'dailyRevenue', 'dailyExpenses', 'createdAt', 'updatedAt']) &&
+                         isValidAirline(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(airlineId) &&
+                         isValidAirline(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'iataCode', 'logoId', 'primaryColorHex', 'secondaryColorHex', 'reputation', 'pilotsHired', 'cabinCrewHired', 'dailyRevenue', 'dailyExpenses', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(airlineId);
+      }
+
+      match /fleet/{aircraftInstanceId} {
+        allow get: if isOwner(userId) && isValidId(aircraftInstanceId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(aircraftInstanceId) &&
+                         incoming().keys().hasAll(['userId', 'airlineId', 'aircraftModelId', 'registration', 'liveryName', 'conditionPercent', 'assignedRouteId', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'airlineId', 'aircraftModelId', 'registration', 'liveryName', 'conditionPercent', 'assignedRouteId', 'createdAt', 'updatedAt']) &&
+                         isValidFleetAircraft(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(aircraftInstanceId) &&
+                         isValidFleetAircraft(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['liveryName', 'conditionPercent', 'assignedRouteId', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(aircraftInstanceId);
+      }
+
+      match /routes/{routeId} {
+        allow get: if isOwner(userId) && isValidId(routeId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(routeId) &&
+                         incoming().keys().hasAll(['userId', 'airlineId', 'originIcao', 'destinationIcao', 'ticketPriceCoins', 'demandScore', 'assignedFleetId', 'active', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'airlineId', 'originIcao', 'destinationIcao', 'ticketPriceCoins', 'demandScore', 'assignedFleetId', 'active', 'createdAt', 'updatedAt']) &&
+                         isValidAirlineRoute(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(routeId) &&
+                         isValidAirlineRoute(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['ticketPriceCoins', 'demandScore', 'assignedFleetId', 'active', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(routeId);
+      }
+
+      match /transactions/{transactionId} {
+        allow get: if isOwner(userId) && isValidId(transactionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(transactionId) &&
+                         incoming().keys().hasAll(['userId', 'txType', 'category', 'amountCoins', 'amountCredits', 'summary', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'txType', 'category', 'amountCoins', 'amountCredits', 'summary', 'createdAt']) &&
+                         isValidEconomyTransaction(incoming(), userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(transactionId);
+      }
+
+      match /flightLogs/{logId} {
+        allow get: if isOwner(userId) && isValidId(logId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(logId) &&
+                         incoming().keys().hasAll(['userId', 'mode', 'aircraftId', 'originIcao', 'destinationIcao', 'missionId', 'landingFpm', 'score', 'xpEarned', 'coinsEarned', 'weatherPreset', 'durationSec', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'mode', 'aircraftId', 'originIcao', 'destinationIcao', 'missionId', 'landingFpm', 'score', 'xpEarned', 'coinsEarned', 'weatherPreset', 'durationSec', 'createdAt']) &&
+                         isValidFlightLog(incoming(), userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(logId);
+      }
+
+      match /friends/{friendUid} {
+        allow get: if isOwner(userId) && isValidId(friendUid);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(friendUid) &&
+                         incoming().keys().hasAll(['userId', 'friendUid', 'friendCallsign', 'friendRank', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'friendUid', 'friendCallsign', 'friendRank', 'createdAt']) &&
+                         isValidFriendEntry(incoming(), userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(friendUid);
+      }
+    }
+
+    match /multiplayerSessions/{sessionId} {
+      allow get: if isSignedIn() && isValidId(sessionId);
+      allow list: if isSignedIn() &&
+                     (existing().status in ['WAITING', 'ACTIVE'] || request.auth.uid in existing().memberUids);
+      allow create: if isSignedIn() &&
+                       isValidId(sessionId) &&
+                       incoming().hostUserId == request.auth.uid &&
+                       incoming().status == 'WAITING' &&
+                       incoming().playerCount == 1 &&
+                       incoming().memberUids.size() == 1 &&
+                       incoming().keys().hasAll(['hostUserId', 'hostCallsign', 'title', 'airportIcao', 'weatherPreset', 'missionType', 'status', 'maxPlayers', 'playerCount', 'memberUids', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['hostUserId', 'hostCallsign', 'title', 'airportIcao', 'weatherPreset', 'missionType', 'status', 'maxPlayers', 'playerCount', 'memberUids', 'createdAt', 'updatedAt']) &&
+                       isValidMultiplayerSession(incoming());
+      allow update: if isSignedIn() &&
+                       isValidId(sessionId) &&
+                       isValidMultiplayerSession(incoming()) &&
+                       existing().status != 'FINISHED' &&
+                       incoming().hostUserId == existing().hostUserId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Join session
+                         (!(request.auth.uid in existing().memberUids) &&
+                          request.auth.uid in incoming().memberUids &&
+                          incoming().memberUids.hasAll(existing().memberUids) &&
+                          incoming().playerCount == existing().playerCount + 1 &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'playerCount', 'updatedAt'])) ||
+                         // Action: Leave session (non-host)
+                         (request.auth.uid in existing().memberUids &&
+                          request.auth.uid != existing().hostUserId &&
+                          !(request.auth.uid in incoming().memberUids) &&
+                          existing().memberUids.hasAll(incoming().memberUids) &&
+                          incoming().playerCount == existing().playerCount - 1 &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['memberUids', 'playerCount', 'updatedAt'])) ||
+                         // Action: Host updates session status or weather
+                         (request.auth.uid == existing().hostUserId &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'weatherPreset', 'updatedAt']))
+                       );
+      allow delete: if isSignedIn() && isValidId(sessionId) && existing().hostUserId == request.auth.uid;
+
+      match /aircraftStates/{playerUid} {
+        allow get: if isSignedIn() && isValidId(sessionId) && isValidId(playerUid) &&
+                      (request.auth.uid == playerUid || request.auth.uid in existing().memberUids);
+        allow list: if isSignedIn() &&
+                       (request.auth.uid in existing().memberUids || existing().playerUid == request.auth.uid);
+        allow create: if isSignedIn() &&
+                         isValidId(sessionId) &&
+                         isValidId(playerUid) &&
+                         request.auth.uid == playerUid &&
+                         exists(/databases/$(database)/documents/multiplayerSessions/$(sessionId)) &&
+                         request.auth.uid in get(/databases/$(database)/documents/multiplayerSessions/$(sessionId)).data.memberUids &&
+                         incoming().keys().hasAll(['sessionId', 'playerUid', 'callsign', 'aircraftId', 'latitude', 'longitude', 'altitudeFt', 'headingDeg', 'pitchDeg', 'rollDeg', 'speedKts', 'memberUids', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['sessionId', 'playerUid', 'callsign', 'aircraftId', 'latitude', 'longitude', 'altitudeFt', 'headingDeg', 'pitchDeg', 'rollDeg', 'speedKts', 'memberUids', 'updatedAt']) &&
+                         isValidAircraftState(incoming(), sessionId, playerUid);
+        allow update: if isSignedIn() &&
+                         isValidId(sessionId) &&
+                         isValidId(playerUid) &&
+                         request.auth.uid == playerUid &&
+                         isValidAircraftState(incoming(), sessionId, playerUid) &&
+                         incoming().sessionId == existing().sessionId &&
+                         incoming().playerUid == existing().playerUid &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['callsign', 'aircraftId', 'latitude', 'longitude', 'altitudeFt', 'headingDeg', 'pitchDeg', 'rollDeg', 'speedKts', 'memberUids', 'updatedAt']);
+        allow delete: if isSignedIn() && isValidId(sessionId) && isValidId(playerUid) && request.auth.uid == playerUid;
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "BDAS",
+  "description": "Bangladesh Airline Simulator — Native Android 3D flight, passenger, career, and airline management simulator across all 8 divisions and 64 districts of Bangladesh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

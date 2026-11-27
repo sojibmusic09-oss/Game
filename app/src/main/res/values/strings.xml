@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BDAS</string>
+    <string name="app_full_title">Bangladesh Airline Simulator</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="cd_hero_banner">Bangladesh Airline Simulator jetliner climbing over Bengal river delta</string>
+    <string name="cd_back_button">Navigate back</string>
+    <string name="cd_language_toggle">Toggle English and Bangla language</string>
+</resources>

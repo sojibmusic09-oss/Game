@@ -1,0 +1,213 @@
+{
+  "entities": {
+    "PilotProfile": {
+      "title": "PilotProfile",
+      "description": "Pilot career progression, wallet, and unlocked aviation assets",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "callsign": { "type": "string" },
+        "pilotRank": {
+          "type": "string",
+          "enum": ["STUDENT_PILOT", "JUNIOR_PILOT", "FIRST_OFFICER", "SENIOR_FIRST_OFFICER", "CAPTAIN", "SENIOR_CAPTAIN"]
+        },
+        "xp": { "type": "integer" },
+        "flightHours": { "type": "number" },
+        "bdasCoins": { "type": "integer" },
+        "airlineCredits": { "type": "integer" },
+        "totalFlights": { "type": "integer" },
+        "unlockedAircraftIds": { "type": "array" },
+        "unlockedAirportIds": { "type": "array" },
+        "unlockedAchievementIds": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Set via FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Set via FieldValue.serverTimestamp()" }
+      },
+      "required": ["userId", "displayName", "callsign", "pilotRank", "xp", "flightHours", "bdasCoins", "airlineCredits", "totalFlights", "unlockedAircraftIds", "unlockedAirportIds", "unlockedAchievementIds", "createdAt", "updatedAt"]
+    },
+    "Airline": {
+      "title": "Airline",
+      "description": "Player-managed fictional Bangladeshi airline configuration and summary",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "iataCode": { "type": "string" },
+        "logoId": { "type": "string" },
+        "primaryColorHex": { "type": "string" },
+        "secondaryColorHex": { "type": "string" },
+        "reputation": { "type": "integer" },
+        "pilotsHired": { "type": "integer" },
+        "cabinCrewHired": { "type": "integer" },
+        "dailyRevenue": { "type": "integer" },
+        "dailyExpenses": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "iataCode", "logoId", "primaryColorHex", "secondaryColorHex", "reputation", "pilotsHired", "cabinCrewHired", "dailyRevenue", "dailyExpenses", "createdAt", "updatedAt"]
+    },
+    "FleetAircraft": {
+      "title": "FleetAircraft",
+      "description": "Owned aircraft instance assigned to an airline",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "airlineId": { "type": "string" },
+        "aircraftModelId": { "type": "string" },
+        "registration": { "type": "string" },
+        "liveryName": { "type": "string" },
+        "conditionPercent": { "type": "integer" },
+        "assignedRouteId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "airlineId", "aircraftModelId", "registration", "liveryName", "conditionPercent", "assignedRouteId", "createdAt", "updatedAt"]
+    },
+    "AirlineRoute": {
+      "title": "AirlineRoute",
+      "description": "Airline route between Bangladeshi airports with ticket pricing and demand",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "airlineId": { "type": "string" },
+        "originIcao": { "type": "string" },
+        "destinationIcao": { "type": "string" },
+        "ticketPriceCoins": { "type": "integer" },
+        "demandScore": { "type": "integer" },
+        "assignedFleetId": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "airlineId", "originIcao", "destinationIcao", "ticketPriceCoins", "demandScore", "assignedFleetId", "active", "createdAt", "updatedAt"]
+    },
+    "EconomyTransaction": {
+      "title": "EconomyTransaction",
+      "description": "Immutable economy transaction entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "txType": { "type": "string", "enum": ["INCOME", "EXPENSE"] },
+        "category": { "type": "string" },
+        "amountCoins": { "type": "integer" },
+        "amountCredits": { "type": "integer" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "txType", "category", "amountCoins", "amountCredits", "summary", "createdAt"]
+    },
+    "FlightLog": {
+      "title": "FlightLog",
+      "description": "Completed pilot or passenger flight record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "mode": { "type": "string" },
+        "aircraftId": { "type": "string" },
+        "originIcao": { "type": "string" },
+        "destinationIcao": { "type": "string" },
+        "missionId": { "type": "string" },
+        "landingFpm": { "type": "integer" },
+        "score": { "type": "integer" },
+        "xpEarned": { "type": "integer" },
+        "coinsEarned": { "type": "integer" },
+        "weatherPreset": { "type": "string" },
+        "durationSec": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "mode", "aircraftId", "originIcao", "destinationIcao", "missionId", "landingFpm", "score", "xpEarned", "coinsEarned", "weatherPreset", "durationSec", "createdAt"]
+    },
+    "FriendEntry": {
+      "title": "FriendEntry",
+      "description": "Pilot friend connection entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "friendUid": { "type": "string" },
+        "friendCallsign": { "type": "string" },
+        "friendRank": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "friendUid", "friendCallsign", "friendRank", "createdAt"]
+    },
+    "MultiplayerSession": {
+      "title": "MultiplayerSession",
+      "description": "Online multiplayer flight lobby and shared airspace session",
+      "type": "object",
+      "properties": {
+        "hostUserId": { "type": "string" },
+        "hostCallsign": { "type": "string" },
+        "title": { "type": "string" },
+        "airportIcao": { "type": "string" },
+        "weatherPreset": { "type": "string" },
+        "missionType": { "type": "string" },
+        "status": { "type": "string", "enum": ["WAITING", "ACTIVE", "FINISHED"] },
+        "maxPlayers": { "type": "integer" },
+        "playerCount": { "type": "integer" },
+        "memberUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hostUserId", "hostCallsign", "title", "airportIcao", "weatherPreset", "missionType", "status", "maxPlayers", "playerCount", "memberUids", "createdAt", "updatedAt"]
+    },
+    "MultiplayerAircraftState": {
+      "title": "MultiplayerAircraftState",
+      "description": "Live multiplayer aircraft pose within an active session",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "playerUid": { "type": "string" },
+        "callsign": { "type": "string" },
+        "aircraftId": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "altitudeFt": { "type": "number" },
+        "headingDeg": { "type": "number" },
+        "pitchDeg": { "type": "number" },
+        "rollDeg": { "type": "number" },
+        "speedKts": { "type": "number" },
+        "memberUids": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sessionId", "playerUid", "callsign", "aircraftId", "latitude", "longitude", "altitudeFt", "headingDeg", "pitchDeg", "rollDeg", "speedKts", "memberUids", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/PilotProfile" },
+      "description": "Authenticated pilot profile and progression"
+    },
+    "/users/{userId}/airlines/{airlineId}": {
+      "schema": { "$ref": "#/entities/Airline" },
+      "description": "Player-owned airline records"
+    },
+    "/users/{userId}/fleet/{aircraftInstanceId}": {
+      "schema": { "$ref": "#/entities/FleetAircraft" },
+      "description": "Owned aircraft fleet under user"
+    },
+    "/users/{userId}/routes/{routeId}": {
+      "schema": { "$ref": "#/entities/AirlineRoute" },
+      "description": "Airline routes operated by player"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/EconomyTransaction" },
+      "description": "Economy transaction history"
+    },
+    "/users/{userId}/flightLogs/{logId}": {
+      "schema": { "$ref": "#/entities/FlightLog" },
+      "description": "Completed flight logs"
+    },
+    "/users/{userId}/friends/{friendUid}": {
+      "schema": { "$ref": "#/entities/FriendEntry" },
+      "description": "Player friends roster"
+    },
+    "/multiplayerSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/MultiplayerSession" },
+      "description": "Online multiplayer flight sessions"
+    },
+    "/multiplayerSessions/{sessionId}/aircraftStates/{playerUid}": {
+      "schema": { "$ref": "#/entities/MultiplayerAircraftState" },
+      "description": "Real-time shared aircraft telemetry for session members"
+    }
+  }
+}

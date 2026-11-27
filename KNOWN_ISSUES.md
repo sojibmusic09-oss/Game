@@ -1,0 +1,6 @@
+# Known Issues & Constraints
+
+1. **No Unity 6 Editor in Cloud Container**: Per user clarification, BDAS was built as a native Android Kotlin + Jetpack Compose + OpenGL ES 3.0 application rather than a Unity 6 project, as Unity Editor is not installed in the build container.
+2. **Headless Container Rendering Verification**: OpenGL ES 3.0 shaders (`ShaderUtils`, `BdasGlRenderer`), `AudioTrack` output, `TextToSpeech` Bangla/English audio, and Google Credential Manager UI cannot be executed inside the headless build container because `adb` and an interactive Android emulator are unavailable to the agent; users verify visual/audio rendering in the Streaming Android Emulator or on a physical Android device.
+3. **Bangla TTS Voice Pack Dependency**: Android `TextToSpeech` uses `bn-BD` when Bangla mode is active and automatically falls back to `en-US` if the device lacks an offline `bn-BD` TTS voice pack.
+4. **Multiplayer Friend Addition**: `MultiplayerRepository.addFriend` uses `set()` on `/users/{uid}/friends/{friendUid}` while `allow update: if false` in `firestore.rules`; adding a brand-new friend UID succeeds, whereas re-adding an already-saved friend UID without deleting first is rejected by rules.
