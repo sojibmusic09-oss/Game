@@ -83,3 +83,4 @@ jobs:
           body: "BDAS Debug APK build"
           files: ${{ steps.verify_apk.outputs.apk_path }}
           make_latest: false
+
