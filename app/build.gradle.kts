@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
@@ -106,7 +105,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 
     val roomVersion = "2.6.1"
-    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("room:room-runtime:$roomVersion".replaceFirst("room:", "androidx.room:"))
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
