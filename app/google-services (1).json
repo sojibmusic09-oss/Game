@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "866990204327",
+    "project_id": "l2-fdd35",
+    "storage_bucket": "l2-fdd35.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866990204327:android:4a10d25837f6d2f294c282",
+        "android_client_info": {
+          "package_name": "com.aistudio.bdas.qmkxrp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "866990204327-e928s88p5lnuv22vknblkcu1d1e0mh5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_jG2ga1aU-WgZ2jTXntFv9n_kBWkZPNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "866990204327-e928s88p5lnuv22vknblkcu1d1e0mh5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:866990204327:android:f406d25f4d6dee9794c282",
+        "android_client_info": {
+          "package_name": "com.game.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "866990204327-e928s88p5lnuv22vknblkcu1d1e0mh5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_jG2ga1aU-WgZ2jTXntFv9n_kBWkZPNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "866990204327-e928s88p5lnuv22vknblkcu1d1e0mh5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
